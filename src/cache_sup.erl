@@ -1,28 +1,81 @@
-
+%%%-------------------------------------------------------------------
+%%% @author Grigory Starinkin <starinkin@gmail.com>
+%%% @doc
+%%% Supervisor module for simple cache implementation
+%%% from book Erlang and OTP in Action
+%%% @end
+%%% Created :  4 Sep 2013 by Grigory Starinkin <starinkin@gmail.com>
+%%%-------------------------------------------------------------------
 -module(cache_sup).
 
 -behaviour(supervisor).
 
 %% API
--export([start_link/0]).
+-export([start_link/0,
+	start_child/2]).
 
 %% Supervisor callbacks
 -export([init/1]).
 
-%% Helper macro for declaring children of supervisor
--define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
+-define(SERVER, ?MODULE).
 
-%% ===================================================================
-%% API functions
-%% ===================================================================
+%%%===================================================================
+%%% API functions
+%%%===================================================================
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Starts the supervisor
+%%
+%% @spec start_link() -> supervisor:startlink_ret()
+%% @end
+%%--------------------------------------------------------------------
 start_link() ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
-%% ===================================================================
-%% Supervisor callbacks
-%% ===================================================================
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Start child
+%% @spec start_child(Value::term(), LeaseTime::term()) -> supervisor:startchild_ret()
+%% @end
+%%--------------------------------------------------------------------
+start_child(Value, LeaseTime) ->
+    supervisor:start_child(?SERVER, [Value, LeaseTime]).
 
+%%%===================================================================
+%%% Supervisor callbacks
+%%%===================================================================
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Whenever a supervisor is started using supervisor:start_link/[2,3],
+%% this function is called by the new process to find out about
+%% restart strategy, maximum restart frequency and child
+%% specifications.
+%%
+%% @spec init(Args) -> {ok, {SupFlags, [ChildSpec]}} |
+%%                     ignore |
+%%                     {error, Reason}
+%% @end
+%%--------------------------------------------------------------------
 init([]) ->
-    {ok, { {one_for_one, 5, 10}, []} }.
+    RestartStrategy = simple_one_for_one,
+    MaxRestarts = 0,
+    MaxSecondsBetweenRestarts = 1,
 
+    SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
+
+    Restart = temporary,
+    Shutdown = brutal_kill,
+    Type = worker,
+
+    Element = {cache_element, {cache_element, start_link, []},
+	       Restart, Shutdown, Type, [cache_element]},
+    Children = [Element],
+    {ok, {SupFlags, Children}}.
+
+%%%===================================================================
+%%% Internal functions
+%%%===================================================================
