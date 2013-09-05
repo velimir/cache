@@ -36,7 +36,9 @@
 %% @doc
 %% Starts the server
 %%
-%% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link(Value::term(), LeaseTime::integer()) -> {ok, Pid} |
+%%                                                             ignore |
+%%                                                     {error, Error}
 %% @end
 %%--------------------------------------------------------------------
 start_link(Value, LeaseTime) ->
@@ -92,10 +94,8 @@ delete(Pid) ->
 %% @doc
 %% Initializes the server
 %%
-%% @spec init([Value::term(), LeaseTime::integer()]) -> {ok, State} |
-%%                                             {ok, State, Timeout} |
-%%                                                           ignore |
-%%                                                   {stop, Reason}
+%% @spec init([term(), ... ]) -> {ok, State, Timeout}
+%% 
 %% @end
 %%--------------------------------------------------------------------
 init([Value, LeaseTime]) ->
@@ -193,8 +193,10 @@ code_change(_OldVsn, State, _Extra) ->
 
 %%--------------------------------------------------------------------
 %% @doc Get element remain time from given StartTime and LeaseTime
-%% @spec time_left(_StartTime::any(), 'inifinity') -> 'inifinity';
-%%       time_left(StartTime::integer(), LeaseTime::integer()) -> integer()
+%% @spec time_left(_StartTime::any(), LeaseTime) -> RetType
+%% where
+%%       LeaseType = integer() | 'infinity'
+%%       RetType = integer() | 'infinity'
 %% @end
 %%--------------------------------------------------------------------
 time_left(_StartTime, infinity) ->
