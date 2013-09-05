@@ -52,7 +52,9 @@ end_per_suite(Config) ->
 
 all() -> 
     [
-     simple_test_case
+     simple_test_case,
+     cache_with_custom_lease_time,
+     read_write_case
     ].
 
 %%--------------------------------------------------------------------
@@ -60,6 +62,26 @@ all() ->
 %%--------------------------------------------------------------------
 
 simple_test_case(_Config) -> 
-    simple_cache:insert(russia, moscow),
-    {ok, moscow} = simple_cache:lookup(russia),
+    simple_cache:insert(india,  new_delhi),
+    {ok, new_delhi} = simple_cache:lookup(india),
     ok.
+
+cache_with_custom_lease_time(_Config) ->
+    simple_cache:insert(russia, moscow, 1),
+    simple_cache:insert('USA', washington),
+    timer:sleep(2000),
+    {error, not_found} = simple_cache:lookup(russia),
+    {ok, washington} = simple_cache:lookup('USA'),
+    ok.
+
+read_write_case(_Config) ->
+    simple_cache:insert(russia, moscow),
+    simple_cache:insert('USA', washington),
+
+    simple_cache:delete(russia),
+
+    {ok, washington} = simple_cache:lookup('USA'),
+    {error, not_found} = simple_cache:lookup(russia),
+
+    ok.
+    

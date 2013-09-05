@@ -10,6 +10,8 @@
 
 -behaviour(gen_server).
 
+-include("simple_cache.hrl").
+
 %% API
 -export([start_link/2,
 	create/1,
@@ -23,7 +25,6 @@
 	 terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
--define(DEFAULT_LEASE_TIME, (60 * 60 * 24)).
 
 -record(state, {value, lease_time, start_time}).
 
@@ -157,6 +158,7 @@ handle_cast(delete, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_info(timeout, State) ->
+    error_logger:info_msg("process is going to down due to timeout"),
     {stop, normal, State}.
 
 %%--------------------------------------------------------------------
