@@ -22,7 +22,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--define(SERVER, ?MODULE). 
+-define(SERVER, ?MODULE).
 -define(DEFAULT_LEASE_TIME, (60 * 60 * 24)).
 
 -record(state, {value, lease_time, start_time}).
@@ -205,3 +205,76 @@ time_left(StartTime, LeaseTime) ->
          Time when Time =< 0 -> 0;
          Time                -> Time * 1000
     end.
+
+
+%%%---------------------------------------------------------------------------
+%% UNIT TESTS
+%%%---------------------------------------------------------------------------
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+
+left_time_test_() ->
+    [
+     ?_assertEqual(time_left(0, infinity), infinity),
+
+     ?_assertError(badarith, time_left(0, some_atom)),
+     ?_assertError(badarith, time_left(some_atom, 0)),
+     ?_assertError(badarith, time_left(some_atom, some_atom)),
+
+     fun() ->
+	     Now = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+	     LeftTimeMs = time_left(Now - 3000, 3600),
+	     ?assertMatch(600 * 1000, LeftTimeMs)
+     end,
+
+     fun() ->
+	     Now = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+	     LeftTimeMs = time_left(Now - 3700, 3600),
+	     ?assertMatch(0, LeftTimeMs)
+     end
+    ].
+
+init_test_() ->
+    [
+     fun() ->
+	     StartTime = calendar:datetime_to_gregorian_seconds(
+			   calendar:local_time()),
+	     {ok, State, 3600000} = init([some_value, 3600]),
+	     ?assertMatch(#state{value = some_value,
+				 lease_time = 3600,
+				 start_time = StartTime},
+			  State)
+     end,
+
+     fun() ->
+	     {ok, State, infinity} = init([another_value, infinity]),
+	     StartTime = calendar:datetime_to_gregorian_seconds(
+			   calendar:local_time()),
+	     State = #state{
+	       value = another_value,
+	       lease_time = infinity,
+	       start_time = StartTime
+	      }
+     end,
+
+     ?_assertError(function_clause, init([]))
+    ].
+
+simple_crud_test_() ->
+    {spawn,
+     [
+      fun() ->
+	      Rs = start_link(simple_value, 3600),
+	      ?assertMatch({ok, _Pid}, Rs),
+	      {ok, Pid} = Rs,
+
+	      ?assertMatch({ok, simple_value},  fetch(Pid)),
+	      replace(Pid, another_value),
+
+	      ?assertMatch({ok, another_value}, fetch(Pid)),
+	      ?assertMatch(ok, delete(Pid))
+      end
+     ]
+    }.
+
+-endif.

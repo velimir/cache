@@ -1,0 +1,12 @@
+*~
+\#*\#
+
+# Compiled files
+ebin/*.beam
+test/*.beam
+
+# rebar test dir
+.eunit/
+
+# log dir
+logs/

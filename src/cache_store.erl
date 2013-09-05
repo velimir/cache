@@ -58,3 +58,42 @@ lookup(Key) ->
 %%--------------------------------------------------------------------
 delete(Pid) ->
     ets:match_delete(?TABLE_ID, {'_', Pid}).
+
+%%%---------------------------------------------------------------------------
+%% UNIT TESTS
+%%%---------------------------------------------------------------------------
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+
+simple_read_write_test_() ->
+    {spawn,
+      [
+       fun() ->
+	       init(),
+	       insert(moscow, russia),
+	       {ok, russia} = lookup(moscow)
+       end
+      ]
+     }.
+
+simple_delete_test() ->
+    {spawn,
+     [
+      fun() ->
+	      init(),
+
+	      insert(moscow, russia),
+	      {ok, russia} = lookup(moscow),
+
+	      insert(washington, 'USA'),
+	      {ok, 'USA'} = lookup(washington),
+
+	      delete(russia),
+	      {error, not_found} = lookup(moscow),
+
+	      {ok, 'USA'} = lookup(washington)
+      end
+     ]
+    }.
+
+-endif.

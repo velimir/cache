@@ -53,4 +53,3 @@ delete(Key) ->
          {error, _Reason} ->
              ok
     end.
-
