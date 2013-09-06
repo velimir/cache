@@ -3,6 +3,7 @@
 
 # Compiled files
 ebin/*.beam
+ebin/simple_cache.app
 test/*.beam
 
 # rebar test dir
