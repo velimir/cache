@@ -51,7 +51,7 @@ start_link(Value, LeaseTime) ->
 %% @end
 %%--------------------------------------------------------------------
 create(Value, LeaseTime) ->
-    cache_sup:start_child(Value, LeaseTime).
+    cache_element_sup:start_child(Value, LeaseTime).
 
 %%--------------------------------------------------------------------
 %% @doc Create new child with given Value and defalut lease time
@@ -59,7 +59,7 @@ create(Value, LeaseTime) ->
 %% @end
 %%--------------------------------------------------------------------
 create(Value) ->
-    cache_sup:start_child(Value, ?DEFAULT_LEASE_TIME).
+    cache_element_sup:start_child(Value, ?DEFAULT_LEASE_TIME).
 
 %%--------------------------------------------------------------------
 %% @doc Get value from process with given Pid
@@ -158,7 +158,6 @@ handle_cast(delete, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_info(timeout, State) ->
-    error_logger:info_msg("process is going to down due to timeout"),
     {stop, normal, State}.
 
 %%--------------------------------------------------------------------

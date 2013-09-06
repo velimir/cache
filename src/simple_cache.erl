@@ -22,13 +22,14 @@
 %% @end
 %%--------------------------------------------------------------------
 insert(Key, Value, LeaseTime) ->
-    error_logger:info_msg("insert pair: ~p on ~p seconds", [{Key, Value}, LeaseTime]),
     case cache_store:lookup(Key) of
-         {ok, Pid} ->
-             cache_element:replace(Pid, Value);
-         {error, _} ->
-             {ok, Pid} = cache_element:create(Value, LeaseTime),
-             cache_store:insert(Key, Pid)
+        {ok, Pid} ->
+            cache_element:replace(Pid, Value),
+            cache_element:replace(Key, Value);
+        {error, _} ->
+            {ok, Pid} = cache_element:create(Value, LeaseTime),
+            cache_store:insert(Key, Pid),
+            cache_event:create(Key, Value)
     end.
 
 %%--------------------------------------------------------------------
@@ -47,12 +48,13 @@ insert(Key, Value) ->
 %%--------------------------------------------------------------------
 lookup(Key) ->
     try
-         {ok, Pid} = cache_store:lookup(Key),
-         {ok, Value} = cache_element:fetch(Pid),
-         {ok, Value}
+        cache_event:lookup(Key),
+        {ok, Pid} = cache_store:lookup(Key),
+        {ok, Value} = cache_element:fetch(Pid),
+        {ok, Value}
     catch
-         _Class:_Exception ->
-             {error, not_found}
+        _Class:_Exception ->
+            {error, not_found}
     end.
 
 %%--------------------------------------------------------------------
@@ -61,6 +63,7 @@ lookup(Key) ->
 %% @end
 %%--------------------------------------------------------------------
 delete(Key) ->
+    cache_event:delete(Key),
     case cache_store:lookup(Key) of
          {ok, Pid} ->
              cache_element:delete(Pid);

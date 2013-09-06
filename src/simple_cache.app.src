@@ -2,10 +2,10 @@
  [
   {description, "Simple cache"},
   {modules, [
-	     cache_app,
+             cache_app,
 	     cache_sup
 	    ]},
-  {vsn, "1"},
+  {vsn, git},
   {registered, [cache_sup]},
   {applications, [
                   kernel,

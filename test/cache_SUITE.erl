@@ -34,6 +34,7 @@
 %%--------------------------------------------------------------------
 init_per_suite(Config) ->
     application:start(simple_cache),
+    cache_event_logger:add_handler(),
     Config.
 
 end_per_suite(Config) ->

@@ -1,17 +1,18 @@
 %%%-------------------------------------------------------------------
 %%% @author Grigory Starinkin <starinkin@gmail.com>
 %%% @doc
-%%% Root supervisor module for simple cache application
+%%% Supervisor module for cache elements
 %%% from book Erlang and OTP in Action
 %%% @end
 %%% Created :  4 Sep 2013 by Grigory Starinkin <starinkin@gmail.com>
 %%%-------------------------------------------------------------------
--module(cache_sup).
+-module(cache_element_sup).
 
 -behaviour(supervisor).
 
 %% API
--export([start_link/0]).
+-export([start_link/0,
+	start_child/2]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -26,11 +27,21 @@
 %% @doc
 %% Starts the supervisor
 %%
-%% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link() -> supervisor:startlink_ret()
 %% @end
 %%--------------------------------------------------------------------
 start_link() ->
     supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Start child
+%% @spec start_child(Value::term(), LeaseTime::term()) -> supervisor:startchild_ret()
+%% @end
+%%--------------------------------------------------------------------
+start_child(Value, LeaseTime) ->
+    supervisor:start_child(?SERVER, [Value, LeaseTime]).
 
 %%%===================================================================
 %%% Supervisor callbacks
@@ -50,24 +61,17 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    %% Supervised modules
-    ElementsSup = {cache_element_sup, 
-                   {cache_element_sup, start_link, []},
-                   permanent, 2000, supervisor, [cache_element_sup]},
-    
-    CacheEvent = {cache_event,
-                  {cache_event, start_link, []},
-                  permanent, 2000, worker, [cache_event]}, 
+    RestartStrategy = simple_one_for_one,
+    MaxRestarts = 0,
+    MaxSecondsBetweenRestarts = 1,
 
-    Childs = [CacheEvent, ElementsSup],
-    
-    %% Supervisor strategy
-    RestartStrategy = one_for_one,
-    MaxRestarts = 4,
-    MaxSecondsBetweenRestarts = 3600,
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
 
-    {ok, {SupFlags, Childs}}.
+    CacheElement = {cache_elements, 
+                    {cache_element, start_link, []},
+                    temporary, brutal_kill, worker, [cache_element]},
+    Children = [CacheElement],
+    {ok, {SupFlags, Children}}.
 
 %%%===================================================================
 %%% Internal functions
