@@ -191,6 +191,18 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 
 %%--------------------------------------------------------------------
+%% @doc
+%% Starts the server w/o linking (just for tests)
+%%
+%% @spec start(Value::term(), LeaseTime::integer()) -> {ok, Pid} |
+%%                                                        ignore |
+%%                                                 {error, Error}
+%% @end
+%%--------------------------------------------------------------------
+start(Value, LeaseTime) ->
+    gen_server:start(?MODULE, [Value, LeaseTime], []).
+
+%%--------------------------------------------------------------------
 %% @doc Get element remain time from given StartTime and LeaseTime
 %% @spec time_left(_StartTime::any(), LeaseTime) -> RetType
 %% where
@@ -267,15 +279,16 @@ simple_crud_test_() ->
     {spawn,
      [
       fun() ->
-	      Rs = start_link(simple_value, 3600),
+	      Rs = start(simple_value, 3600),
 	      ?assertMatch({ok, _Pid}, Rs),
 	      {ok, Pid} = Rs,
 
 	      ?assertMatch({ok, simple_value},  fetch(Pid)),
-	      replace(Pid, another_value),
+	      replace(Pid, another_value), 
 
 	      ?assertMatch({ok, another_value}, fetch(Pid)),
-	      ?assertMatch(ok, delete(Pid))
+	      ?assertMatch(ok, delete(Pid)),
+              undefined = whereis(?MODULE)
       end
      ]
     }.
